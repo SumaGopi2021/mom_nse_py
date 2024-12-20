@@ -31,5 +31,5 @@ jobs:
       - name: Upload result
         uses: actions/upload-artifact@v4
         with:
-          name: nse_750_stocks_volume_close_last_one_year
-          path: nse_750_stocks_volume_close_last_one_year.xlsx
+          name: NSE_stocks_close_prices
+          path: NSE_stocks_close_prices.xlsx
