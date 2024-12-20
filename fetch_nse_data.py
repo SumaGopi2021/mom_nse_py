@@ -3,9 +3,7 @@ import pandas as pd
 import datetime
 from concurrent.futures import ThreadPoolExecutor
 
-# Load tickers from the input file
-with open('tickers.txt', 'r') as file:
-    tickers = [line.strip() for line in file.readlines()]
+tickers = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'HINDUNILVR.NS', 'ICICIBANK.NS', 'KOTAKBANK.NS', 'SBIN.NS', 'BAJFINANCE.NS', 'BHARTIARTL.NS']  # Add more tickers as needed
 
 # Define the date range
 end_date = datetime.date.today()
