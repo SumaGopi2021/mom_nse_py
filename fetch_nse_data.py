@@ -2,15 +2,18 @@ import yfinance as yf
 import pandas as pd
 import datetime
 
-# Define the list of 750 NSE stock tickers
-tickers = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'HINDUNILVR.NS', 'ICICIBANK.NS', 'KOTAKBANK.NS', 'SBIN.NS', 'BAJFINANCE.NS', 'BHARTIARTL.NS']  # Add more tickers as needed
+# Load tickers from the input file
+with open('tickers.txt', 'r') as file:
+    tickers = [line.strip() for line in file.readlines()]
 
 # Define the date range
 end_date = datetime.date.today()
 start_date = end_date - datetime.timedelta(days=365)
 
-# Initialize a dictionary to store the data and a list to store failed tickers
-all_data = {}
+# Initialize dictionaries to store the data and a list to store failed tickers
+close_prices = {}
+volumes = {}
+combined_data = {}
 failed_tickers = []
 
 # Fetch the historical data for each ticker
@@ -18,18 +21,26 @@ for ticker in tickers:
     try:
         data = yf.download(ticker, start=start_date, end=end_date)[['Volume', 'Close']]
         if not data.empty:
-            all_data[ticker] = data
+            close_prices[ticker] = data['Close']
+            volumes[ticker] = data['Volume']
+            combined_data[f'{ticker} Close'] = data['Close']
+            combined_data[f'{ticker} Volume'] = data['Volume']
         else:
             failed_tickers.append(ticker)
     except Exception as e:
         failed_tickers.append(ticker)
         print(f"Failed to fetch data for {ticker}: {e}")
 
-# Combine all data into a single DataFrame with multi-level columns
-combined_data = pd.concat(all_data, axis=1)
+# Combine all close prices and volumes into separate DataFrames
+close_prices_df = pd.DataFrame(close_prices)
+volumes_df = pd.DataFrame(volumes)
+combined_df = pd.DataFrame(combined_data)
 
-# Save the data to an Excel file
-combined_data.to_excel('nse_750_stocks_volume_close_last_one_year.xlsx')
+# Create a Pandas Excel writer using XlsxWriter as the engine
+with pd.ExcelWriter('nse_750_stocks_volume_close_last_one_year.xlsx', engine='xlsxwriter') as writer:
+    close_prices_df.to_excel(writer, sheet_name='Close Prices')
+    volumes_df.to_excel(writer, sheet_name='Volumes')
+    combined_df.to_excel(writer, sheet_name='Combined')
 
 # Print the details of failed tickers
 if failed_tickers:
