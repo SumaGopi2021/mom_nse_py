@@ -1,48 +1,42 @@
 import yfinance as yf
 import pandas as pd
 import datetime
-from concurrent.futures import ThreadPoolExecutor
 
+# Define the list of 750 NSE stock tickers
 tickers = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'HINDUNILVR.NS', 'ICICIBANK.NS', 'KOTAKBANK.NS', 'SBIN.NS', 'BAJFINANCE.NS', 'BHARTIARTL.NS']  # Add more tickers as needed
 
 # Define the date range
 end_date = datetime.date.today()
 start_date = end_date - datetime.timedelta(days=365)
 
-# Initialize dictionaries to store the data and a list to store failed tickers
-close_prices = {}
+# Initialize a dictionary to store the data and a list to store failed tickers
+all_data = {}
 failed_tickers = []
 
-def fetch_data(ticker):
+# Fetch the historical data for each ticker
+for ticker in tickers:
     try:
-        data = yf.download(ticker, start=start_date, end=end_date)[['Close']]
+        data = yf.download(ticker, start=start_date, end=end_date)[['Volume', 'Close']]
         if not data.empty:
-            close_prices[ticker] = data['Close']
+            all_data[ticker] = data
         else:
-            close_prices[ticker] = pd.Series(0, index=pd.date_range(start=start_date, end=end_date))
             failed_tickers.append(ticker)
     except Exception as e:
-        close_prices[ticker] = pd.Series(0, index=pd.date_range(start=start_date, end=end_date))
         failed_tickers.append(ticker)
         print(f"Failed to fetch data for {ticker}: {e}")
 
-# Use ThreadPoolExecutor to fetch data concurrently
-with ThreadPoolExecutor(max_workers=10) as executor:
-    executor.map(fetch_data, tickers)
+# Combine all data into a single DataFrame with multi-level columns
+combined_data = pd.concat(all_data, axis=1)
 
-# Combine all close prices into a DataFrame
-close_prices_df = pd.DataFrame(close_prices)
-
-# Create a Pandas Excel writer using XlsxWriter as the engine
-with pd.ExcelWriter('nse_750_stocks_close_last_one_year.xlsx', engine='xlsxwriter') as writer:
-    close_prices_df.to_excel(writer, sheet_name='Close Prices')
+# Save the data to an Excel file
+combined_data.to_excel('nse_750_stocks_volume_close_last_one_year.xlsx')
 
 # Print the details of failed tickers
 if failed_tickers:
-    print("Failed to fetch data for the following tickers (considered value as 0):")
+    print("Failed to fetch data for the following tickers:")
     for ticker in failed_tickers:
         print(ticker)
 else:
     print("Successfully fetched data for all tickers.")
 
-print("Historical data for 750 NSE stocks (Close prices) for the last one year has been generated and saved to 'nse_750_stocks_close_last_one_year.xlsx'.")
+print("Historical data for 750 NSE stocks (Volume and Close prices) for the last one year has been generated and saved to 'nse_750_stocks_volume_close_last_one_year.xlsx'.")
