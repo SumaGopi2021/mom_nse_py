@@ -1,47 +1,23 @@
 import yfinance as yf
 import pandas as pd
-import datetime
 
-# Define the list of 750 NSE stock tickers
-tickers = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'HINDUNILVR.NS', 'ICICIBANK.NS', 'KOTAKBANK.NS', 'SBIN.NS', 'BAJFINANCE.NS', 'BHARTIARTL.NS']  # Add more tickers as needed
+# Define the list of ticker symbols for multiple NSE stocks
+ticker_symbols = ["RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "ICICIBANK.NS"]
 
-# Define the date range
-end_date = datetime.date.today()
-start_date = end_date - datetime.timedelta(days=365)
+# Initialize an empty DataFrame to store close prices
+close_prices = pd.DataFrame()
 
-# Initialize dictionaries to store the data and a list to store failed tickers
-close_prices = {}
-volumes = {}
-failed_tickers = []
-
-# Fetch the historical data for each ticker
-for ticker in tickers:
+# Fetch data for each ticker symbol and store the close prices in the DataFrame
+for ticker in ticker_symbols:
     try:
-        data = yf.download(ticker, start=start_date, end=end_date)[['Volume', 'Close']]
-        if not data.empty:
-            close_prices[ticker] = data['Close']
-            volumes[ticker] = data['Volume']
-        else:
-            failed_tickers.append(ticker)
+        data = yf.download(ticker, period="1y")
+        close_prices[ticker] = data['Close']
     except Exception as e:
-        failed_tickers.append(ticker)
-        print(f"Failed to fetch data for {ticker}: {e}")
+        print(f"Unable to fetch data for {ticker}: {e}")
+        # If unable to fetch data, fill the column with 0
+        close_prices[ticker] = 0
 
-# Combine all close prices and volumes into separate DataFrames
-close_prices_df = pd.DataFrame(close_prices)
-volumes_df = pd.DataFrame(volumes)
+# Save the close prices to an Excel file
+close_prices.to_excel("NSE_stocks_close_prices.xlsx")
 
-# Create a Pandas Excel writer using XlsxWriter as the engine
-with pd.ExcelWriter('nse_750_stocks_volume_close_last_one_year.xlsx', engine='xlsxwriter') as writer:
-    close_prices_df.to_excel(writer, sheet_name='Close Prices')
-    volumes_df.to_excel(writer, sheet_name='Volumes')
-
-# Print the details of failed tickers
-if failed_tickers:
-    print("Failed to fetch data for the following tickers:")
-    for ticker in failed_tickers:
-        print(ticker)
-else:
-    print("Successfully fetched data for all tickers.")
-
-print("Historical data for 750 NSE stocks (Volume and Close prices) for the last one year has been generated and saved to 'nse_750_stocks_volume_close_last_one_year.xlsx'.")
+print("Close prices for multiple NSE stocks for the last 1 year have been downloaded and saved to NSE_stocks_close_prices.xlsx")
