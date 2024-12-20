@@ -1,0 +1,35 @@
+name: Fetch NSE Data
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * *'  # This will run the workflow daily at midnight
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run script
+        run: python fetch_nse_data.py
+
+      - name: Upload result
+        uses: actions/upload-artifact@v2
+        with:
+          name: nse_750_stocks_volume_close_last_one_year
+          path: nse_750_stocks_volume_close_last_one_year.xlsx
