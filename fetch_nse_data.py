@@ -257,20 +257,26 @@ ticker_symbols = [
 "EMUDHRA.NS"
 ]
 
-# Initialize an empty DataFrame to store close prices
-close_prices = pd.DataFrame()
+# Initialize a list to store DataFrames
+data_frames = []
 
-# Fetch data for each ticker symbol and store the close prices in the DataFrame
+# Fetch data for each ticker symbol and store the close prices in the list
 for ticker in ticker_symbols:
     try:
         data = yf.download(ticker, period="1y")
-        close_prices[ticker] = data['Close']
+        close_prices = data[['Close']].rename(columns={'Close': ticker})
+        data_frames.append(close_prices)
     except Exception as e:
         print(f"Unable to fetch data for {ticker}: {e}")
-        # If unable to fetch data, fill the column with 0
-        close_prices[ticker] = 0
+        # If unable to fetch data, create a DataFrame with 0 values
+        dates = pd.date_range(end=pd.Timestamp.today(), periods=365)
+        close_prices = pd.DataFrame({ticker: [0]*365}, index=dates)
+        data_frames.append(close_prices)
+
+# Concatenate all DataFrames along the columns
+all_close_prices = pd.concat(data_frames, axis=1)
 
 # Save the close prices to an Excel file
-close_prices.to_excel("NSE_stocks_close_prices.xlsx")
+all_close_prices.to_excel("NSE_stocks_close_prices.xlsx")
 
 print("Close prices for multiple NSE stocks for the last 1 year have been downloaded and saved to NSE_stocks_close_prices.xlsx")
